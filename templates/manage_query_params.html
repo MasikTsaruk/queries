@@ -1,0 +1,102 @@
+{% extends "index.html" %}
+{% load crispy_forms_tags %}
+
+{% block start %}
+<div class="container mt-4">
+    <h2>Parameter manage for "{{ query.name }}"</h2>
+
+    <h4>Parameters List</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Allowed Values</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in params %}
+            <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.type }}</td>
+                <td>{{ p.min_number|default:"—" }}</td>
+                <td>{{ p.max_number|default:"—" }}</td>
+                <td>{{ p.allowed_values|default:"—" }}</td>
+                <td>
+                    <a href="?edit={{ p.id }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_query_param' p.id %}" class="btn btn-sm btn-danger"
+                       onclick="return confirm('Удалить параметр?');">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">No parameters</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h4>{% if editing %}Change parameter{% else %}Add parameter{% endif %}</h4>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">{% if editing %}Save{% else %}Add{% endif %}</button>
+        {% if editing %}
+            <a href="{% url 'manage_query_params' query.uuid %}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const typeSelect = document.getElementById("id_type");
+
+    function getWrapper(id) {
+        const el = document.getElementById(id);
+        return el ? el.closest(".mb-3, .form-group") : null; 
+        
+    }
+
+    const minNumber = getWrapper("id_min_number");
+    const maxNumber = getWrapper("id_max_number");
+    const minDate = getWrapper("id_min_date");
+    const maxDate = getWrapper("id_max_date");
+    const maxLength = getWrapper("id_max_length");
+    const allowedValues = getWrapper("id_allowed_values");
+
+    function toggleFields() {
+        if (!typeSelect) return;
+        const type = typeSelect.value;
+
+
+        [minNumber, maxNumber, minDate, maxDate, maxLength, allowedValues]
+            .forEach(el => { if (el) el.style.display = "none"; });
+
+
+        if (type === "number") {
+            if (minNumber) minNumber.style.display = "block";
+            if (maxNumber) maxNumber.style.display = "block";
+        }
+        if (type === "date") {
+            if (minDate) minDate.style.display = "block";
+            if (maxDate) maxDate.style.display = "block";
+        }
+        if (type === "select" || type === "multiselect") {
+            if (allowedValues) allowedValues.style.display = "block";
+        }
+        if (type === "string") {
+            if (maxLength) maxLength.style.display = "block";
+        }
+    }
+
+    toggleFields();
+    typeSelect.addEventListener("change", toggleFields);
+});
+</script>
+
+
+
+{% endblock %}

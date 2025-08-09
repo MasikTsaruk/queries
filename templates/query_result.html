@@ -1,0 +1,36 @@
+{% extends 'index.html' %}
+
+{% block start %}
+<h2>Query Result: {{ query.name }}</h2>
+
+<p><strong>SQL query:</strong> {{ sql }}</p>
+
+{% if result %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        {% for col in columns %}
+          <th>{{ col }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in result %}
+        <tr>
+          {% for cell in row %}
+            <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No result to show.</p>
+{% endif %}
+
+<a href="{% url 'run' query.uuid %}">Back to form</a>
+
+{% if request_log_id %}
+  <a href="{% url 'download_excel' request_log_id %}" class="btn btn-primary mt-3">Download Excel</a>
+{% endif %}
+{% endblock %}

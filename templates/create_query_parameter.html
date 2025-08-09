@@ -1,0 +1,76 @@
+{% extends "index.html" %}
+{% block start %}
+{% load crispy_forms_tags %}
+
+<h2>Add Parameter For"{{ query.name }}"</h2>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div>
+        {{ form.name|as_crispy_field }}
+    </div>
+
+    <div>
+        {{ form.type|as_crispy_field }}
+    </div>
+
+    <div id="number-fields" style="display:none;">
+        {{ form.min_number|as_crispy_field }}<br>
+        {{ form.max_number|as_crispy_field }}
+    </div>
+
+
+    <div id="string-field" style="display:none;">
+        {{ form.allowed_values|as_crispy_field }}
+    </div>
+
+    <div id="date-fields" style="display:none;">
+        {{ form.min_date|as_crispy_field }}<br>
+        {{ form.max_date|as_crispy_field }}
+    </div>
+
+    <div id="allowed-values" style="display:none;">
+        {{ form.allowed_values|as_crispy_field }}
+        <small>Type values separated by comma</small>
+    </div>
+
+    <div>
+        {{ form.required.label_tag }} {{ form.required }}
+    </div>
+
+    <button type="submit">Save</button>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const typeSelect = document.getElementById("id_type");
+
+    const numberFields = document.getElementById("number-fields");
+    const dateFields = document.getElementById("date-fields");
+    const allowedValues = document.getElementById("allowed-values");
+
+    function toggleFields() {
+        const type = typeSelect.value;
+
+        numberFields.style.display = (type === "number") ? "block" : "none";
+        dateFields.style.display = (type === "date") ? "block" : "none";
+        allowedValues.style.display = (type === "select" || type === "multiselect") ? "block" : "none";
+
+        if (type === "number") {
+            numberFields.querySelectorAll("input").forEach(el => el.style.display = "inline-block");
+        }
+        if (type === "date") {
+            dateFields.querySelectorAll("input").forEach(el => el.style.display = "inline-block");
+        }
+        if (type === "select" || type === "multiselect") {
+            allowedValues.querySelectorAll("textarea").forEach(el => el.style.display = "inline-block");
+        }
+    }
+
+    typeSelect.addEventListener("change", toggleFields);
+    toggleFields();
+});
+</script>
+
+{% endblock %}

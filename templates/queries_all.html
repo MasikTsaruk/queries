@@ -1,0 +1,48 @@
+{% extends "index.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block start %}
+<div class="container mt-4">
+    <h2>All Queries</h2>
+
+    {% if queries %}
+        <table class="table table-striped table-bordered mt-3">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Recipient</th>
+                    <th>User</th>
+                    <th>Created at</th>
+                    <th>Updated at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for query in queries %}
+                <tr>
+                    <td>{{ query.name }}</td>
+                    <td>{{ query.description }}</td>
+                    <td>{{ query.recipient }}</td>
+                    <td>{{ query.user.email }}</td>
+                    <td>{{ query.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ query.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'run' query.uuid %}" class="btn btn-success btn-sm">Run</a>
+                    </td>
+                    {% if user.is_superuser %}
+                        <td>
+                            <a href="{% url 'edit' query.uuid %}" class="btn btn-warning btn-sm">edit</a>
+                        </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info mt-3" role="alert">
+            No queries found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
