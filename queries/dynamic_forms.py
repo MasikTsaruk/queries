@@ -13,17 +13,17 @@ def build_dynamic_run_form(parameters):
             )
         elif param.type == 'number':
             DynamicRunForm.base_fields[f"{param.name}_min"] = forms.FloatField(
-                required=False, label=f"{param.name} (мин)", initial=param.min_number
+                required=False, label=f"{param.name} (Min)", initial=param.min_number
             )
             DynamicRunForm.base_fields[f"{param.name}_max"] = forms.FloatField(
-                required=False, label=f"{param.name} (макс)", initial=param.max_number
+                required=False, label=f"{param.name} (Max)", initial=param.max_number
             )
         elif param.type == 'date':
             DynamicRunForm.base_fields[f"{param.name}_min"] = forms.DateField(
-                required=False, label=f"{param.name} (от)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.min_date
+                required=False, label=f"{param.name} (From)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.min_date
             )
             DynamicRunForm.base_fields[f"{param.name}_max"] = forms.DateField(
-                required=False, label=f"{param.name} (до)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.max_date
+                required=False, label=f"{param.name} (To)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.max_date
             )
         elif param.type == 'select':
             choices = [(v, v) for v in param.multiselect_allowed_values()]

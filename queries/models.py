@@ -35,7 +35,7 @@ class QueryParameter(models.Model):
         ('multiselect', 'MultiSelect'),
     ]
 
-    name = models.CharField(max_length=255)  # имя колонки в базе
+    name = models.CharField(max_length=255)  
     type = models.CharField(max_length=20, choices=PARAM_TYPES, blank=True)
 
     min_number = models.FloatField(blank=True, null=True)
