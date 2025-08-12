@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
-from .forms import QueryForm, QueryChangePasswordForm, QueryParameterForm
+from .forms import QueryForm, QueryChangePasswordForm, QueryParameterForm, QueryEditForm
 from .models import Query, QueryParameter, RequestLog
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -74,14 +74,12 @@ def edit_query(request, query_uuid):
     params = query.parameters.all()
 
     if request.method == "POST":
-        form = QueryForm(request.POST, instance=query)
+        form = QueryEditForm(request.POST, instance=query)
         if form.is_valid():
-            query = form.save(commit=False)
-            query.password = make_password(query.password)
             form.save()
             return redirect("/queries/queries_my")
     else:
-        form = QueryForm(instance=query)
+        form = QueryEditForm(instance=query)
 
     return render(request, "edit_query.html", {
         "query": query,
