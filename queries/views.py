@@ -186,10 +186,11 @@ def run_query(request, query_uuid):
             context_data = {}
             for param in parameters:
                 if param.type == 'date':
-                    min_date = form.cleaned_data.get(f"{param.name}_min")
-                    max_date = form.cleaned_data.get(f"{param.name}_max")
-                    context_data[f"{param.name}_min"] = min_date.isoformat() if min_date else None
-                    context_data[f"{param.name}_max"] = max_date.isoformat() if max_date else None
+                    date_value = form.cleaned_data.get(param.name)
+                    if date_value:
+                        context_data[param.name] = date_value.isoformat()
+                    else:
+                        None
                 elif param.type == 'number':
                     context_data[f"{param.name}_min"] = form.cleaned_data.get(f"{param.name}_min")
                     context_data[f"{param.name}_max"] = form.cleaned_data.get(f"{param.name}_max")

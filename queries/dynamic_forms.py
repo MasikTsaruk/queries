@@ -19,11 +19,17 @@ def build_dynamic_run_form(parameters):
                 required=False, label=f"{param.name} (Max)", initial=param.max_number
             )
         elif param.type == 'date':
-            DynamicRunForm.base_fields[f"{param.name}_min"] = forms.DateField(
-                required=False, label=f"{param.name} (From)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.min_date
-            )
-            DynamicRunForm.base_fields[f"{param.name}_max"] = forms.DateField(
-                required=False, label=f"{param.name} (To)", widget=forms.DateInput(attrs={'type': 'date'}), initial=param.max_date
+            attrs = {'type': 'date'}
+            if param.min_date:
+                attrs['min'] = param.min_date.strftime('%Y-%m-%d')
+            if param.max_date:
+                attrs['max'] = param.max_date.strftime('%Y-%m-%d')
+
+            DynamicRunForm.base_fields[param.name] = forms.DateField(
+                required=param.required,
+                label=param.name,
+                widget=forms.DateInput(attrs=attrs),
+                initial=param.min_date  
             )
         elif param.type == 'select':
             choices = [(v, v) for v in param.multiselect_allowed_values()]
