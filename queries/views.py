@@ -162,7 +162,6 @@ def delete_query_param(request, param_id):
     param.delete()
     return redirect("manage_query_params", query_uuid=query_uuid)
 
-@login_required
 def run_query(request, query_uuid):
     query = get_object_or_404(Query, uuid=query_uuid)
     parameters = query.parameters.all()

@@ -65,6 +65,8 @@
             <a href="{% url 'manage_query_params' query.uuid %}" class="btn btn-secondary">Cancel</a>
         {% endif %}
     </form>
+    <br>
+    <a class="btn btn-secondary" href="/queries/edit_query/{{query.uuid}}">Back</a>
 </div>
 
 <script>

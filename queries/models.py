@@ -63,10 +63,11 @@ class QueryParameter(models.Model):
 class RequestLog(models.Model):
     query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name='request_logs')
     request = models.TextField(help_text="SQL request")
-    response = models.TextField(help_text="Ответ (result or error)", blank=True, null=True)
+    response = models.JSONField(blank=True, null=True) 
     response_code = models.PositiveIntegerField(help_text="response code(0 = success, 1 = error)", default=0)
     response_time = models.FloatField(help_text="time of execution", default=0.0)
     created_at = models.DateTimeField(default=timezone.now)
+
 
     def __str__(self):
         return f"Log for query {self.query_id} at {self.created_at}"
