@@ -1,5 +1,7 @@
 from django import forms
 from .models import Query, QueryParameter
+from crispy_forms.helper import FormHelper
+
 
 class QueryForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
@@ -20,6 +22,14 @@ class QueryForm(forms.ModelForm):
             'template': 'SQL Query',
             'db_dsn': 'Database DSN',
         }
+        
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recipient'].required = False
+        self.fields['recipient'].label_suffix = ""
+        self.helper = FormHelper()
+        self.helper.render_required_fields = False
 
 class QueryEditForm(forms.ModelForm):
     class Meta:

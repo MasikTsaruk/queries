@@ -23,8 +23,6 @@
                 <th>Type</th>
                 <th>Min</th>
                 <th>Max</th>
-                <th>Min Date</th>
-                <th>Max Date</th>
                 <th>Allowed Values</th>
                 <th></th>
             </tr>
@@ -34,10 +32,24 @@
             <tr>
                 <td>{{ p.name }}</td>
                 <td>{{ p.type }}</td>
-                <td>{{ p.min_number|default:"—" }}</td>
-                <td>{{ p.max_number|default:"—" }}</td>
-                <td>{{ p.min_date|default:"—" }}</td>
-                <td>{{ p.max_date|default:"—" }}</td>
+                                <td>
+                    {% if p.min_number is not None %}
+                        {{ p.min_number }}
+                    {% elif p.min_date %}
+                        {{ p.min_date }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.max_number is not None %}
+                        {{ p.max_number }}
+                    {% elif p.max_date %}
+                        {{ p.max_date }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
                 <td>{{ p.allowed_values|default:"—" }}</td>
                 <td>
                     <a href="{% url 'manage_query_params' query.uuid %}?edit={{ p.id }}" class="btn btn-sm btn-warning">Edit</a>

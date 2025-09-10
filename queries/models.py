@@ -9,7 +9,7 @@ class Query(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
-    recipient = models.CharField(max_length=255)
+    recipient = models.CharField(max_length=255, blank=True, null=True)
     user = models.ForeignKey(QueryUser, on_delete=models.CASCADE, related_name="queries")
 
     template = models.TextField(help_text="Enter Here SQL query")
