@@ -15,4 +15,5 @@ urlpatterns = [
     path('download_excel/<int:request_log_id>/', views.download_excel, name='download_excel'),
     path("queries/<uuid:query_uuid>/params/", views.manage_query_params, name="manage_query_params"),
     path("queries/params/<int:param_id>/delete/", views.delete_query_param, name="delete_query_param"),
+    path('repeat_request/<int:request_log_id>/', views.repeat_request, name='repeat_request'),
 ]

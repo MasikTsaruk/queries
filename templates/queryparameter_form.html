@@ -9,4 +9,38 @@
   {{ form|crispy }}
   <button type="submit" class="btn btn-success">Go</button>
 </form>
+
+<hr class="my-4">
+
+<div class="mt-4">
+  <table class="table table-striped table-hover table-bordered align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">When was executed</th>
+        <th scope="col">How long (s)</th>
+        <th scope="col">Parameters</th>
+        <th scope="col">Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in requests %}
+      <tr>
+        <td>{{ i.created_at|date:"Y-m-d H:i:s" }}</td>
+        <td>{{ i.response_time|floatformat:2 }}</td>
+        <td>
+          <pre class="mb-0">{{ i.parameters|safe }}</pre>
+        </td>
+        <td>
+          <a href="{% url 'repeat_request' i.id %}" class="btn btn-primary">Go to Query</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="text-center">No requests found</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 {% endblock %}

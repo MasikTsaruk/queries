@@ -168,7 +168,6 @@ def run_query(request, query_uuid):
     DynamicRunForm = build_dynamic_run_form(parameters)
 
     session_key = f'query_authenticated_{str(query.uuid)}'
-    print(check_password('', query.password))
     if query.password and not request.session.get(session_key, False):
         if(check_password('', query.password)):
             request.session[session_key] = True
@@ -195,11 +194,10 @@ def run_query(request, query_uuid):
                     else:
                         None
                 elif param.type == 'number':
-                    context_data[f"{param.name}_min"] = form.cleaned_data.get(f"{param.name}_min")
-                    context_data[f"{param.name}_max"] = form.cleaned_data.get(f"{param.name}_max")
+                    context_data[param.name] = form.cleaned_data.get(param.name)
                 else:
                     context_data[param.name] = form.cleaned_data.get(param.name)
-
+            print(context_data)
             t = Template(query.template)
             c = Context(context_data)
             sql = t.render(c)
@@ -220,6 +218,7 @@ def run_query(request, query_uuid):
                 log = RequestLog.objects.create(
                     query=query,
                     request=sql,
+                    parameters=context_data,
                     response=json.dumps(data_for_log, default=str),
                     response_code=0,
                     response_time=end_time - start_time
@@ -233,6 +232,7 @@ def run_query(request, query_uuid):
                 log = RequestLog.objects.create(
                     query=query,
                     request=sql,
+                    parameters=context_data,
                     response=str(e),
                     response_code=1,
                     response_time=0
@@ -256,8 +256,8 @@ def run_query(request, query_uuid):
 
     else:
         form = DynamicRunForm()
-
-    return render(request, 'queryparameter_form.html', {'form': form, 'query': query})
+    requests = RequestLog.objects.filter(query_id=query.id).order_by('-created_at')[:10]
+    return render(request, 'queryparameter_form.html', {'form': form, 'query': query, 'requests' : requests})
 
 
 
@@ -285,3 +285,93 @@ def download_excel(request, request_log_id):
     response['Content-Disposition'] = f'attachment; filename="query_result_{log.id}.xlsx"'
     wb.save(response)
     return response
+
+
+def repeat_request(request, request_log_id):
+    log = get_object_or_404(RequestLog, id=request_log_id)
+    query = log.query
+
+    session_key = f'query_authenticated_{str(query.uuid)}'
+    if query.password and not request.session.get(session_key, False):
+        if check_password('', query.password):
+            request.session[session_key] = True
+            return redirect(request.path)
+        elif request.method == 'POST' and 'query_password' in request.POST:
+            if check_password(request.POST.get('query_password'), query.password):
+                request.session[session_key] = True
+                return redirect(request.path)
+            else:
+                error = "Wrong Password"
+                return render(request, 'query_password.html', {'query': query, 'error': error})
+        else:
+            return render(request, 'query_password.html', {'query': query})
+
+
+    if request.method == 'GET':
+        try:
+            result = json.loads(log.response)
+            print(result)
+        except Exception:
+            result = None
+
+        return render(request, 'query_result.html', {
+            'query': query,
+            'result': [list(r.values()) for r in result],
+            'columns': list(result[0].keys()),
+            'sql': log.request,
+            'error': None if log.response_code == 0 else log.response,
+            'request_log_id': log.id
+        })
+
+    elif request.method == 'POST':
+        parameters = log.parameters
+        t = Template(query.template)
+        c = Context(parameters)
+        sql = t.render(c)
+
+        try:
+            start_time = time.time()
+            conn = psycopg2.connect(query.db_dsn)
+            cur = conn.cursor()
+            cur.execute(sql)
+            result = cur.fetchall()
+            columns = [desc[0] for desc in cur.description]
+            cur.close()
+            conn.close()
+            end_time = time.time()
+
+            data_for_log = [dict(zip(columns, row)) for row in result]
+
+            new_log = RequestLog.objects.create(
+                query=query,
+                request=sql,
+                parameters=parameters,
+                response=json.dumps(data_for_log, default=str),
+                response_code=0,
+                response_time=end_time - start_time
+            )
+
+        except Exception as e:
+            new_log = RequestLog.objects.create(
+                query=query,
+                request=sql,
+                parameters=parameters,
+                response=str(e),
+                response_code=1,
+                response_time=0
+            )
+            return render(request, 'query_result.html', {
+                'query': query,
+                'error': str(e),
+                'request_log_id': new_log.id
+            })
+
+        return render(request, 'query_result.html', {
+            'query': query,
+            'result': result,
+            'columns': columns,
+            'sql': sql,
+            'error': None,
+            'request_log_id': new_log.id
+        })
+    f

@@ -66,6 +66,7 @@ class RequestLog(models.Model):
     response = models.JSONField(blank=True, null=True) 
     response_code = models.PositiveIntegerField(help_text="response code(0 = success, 1 = error)", default=0)
     response_time = models.FloatField(help_text="time of execution", default=0.0)
+    parameters = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
 
