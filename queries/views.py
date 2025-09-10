@@ -168,8 +168,12 @@ def run_query(request, query_uuid):
     DynamicRunForm = build_dynamic_run_form(parameters)
 
     session_key = f'query_authenticated_{str(query.uuid)}'
+    print(check_password('', query.password))
     if query.password and not request.session.get(session_key, False):
-        if request.method == 'POST' and 'query_password' in request.POST:
+        if(check_password('', query.password)):
+            request.session[session_key] = True
+            return redirect(request.path)
+        elif request.method == 'POST' and 'query_password' in request.POST:
             if check_password(request.POST.get('query_password'), query.password):
                 request.session[session_key] = True
                 return redirect(request.path)

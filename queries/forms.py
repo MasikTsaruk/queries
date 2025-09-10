@@ -4,7 +4,7 @@ from crispy_forms.helper import FormHelper
 
 
 class QueryForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput, required=False,)
     class Meta:
         model = Query
         fields = ['name', 'password', 'description', 'recipient', 'template', 'db_dsn']
