@@ -29,10 +29,8 @@
                     <td>{{ query.updated_at|date:"Y-m-d H:i" }}</td>
                     <td>
                         <a href="{% url 'run' query.uuid %}" class="btn btn-success btn-sm">Run</a>
-                    </td>
                     {% if user.is_superuser %}
-                        <td>
-                            <a href="{% url 'edit' query.uuid %}" class="btn btn-warning btn-sm">edit</a>
+                            <a href="{% url 'edit' query.uuid %}" class="btn btn-primary btn-sm">Edit</a>
                         </td>
                     {% endif %}
                 </tr>
