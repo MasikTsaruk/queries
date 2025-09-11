@@ -7,12 +7,11 @@ from django.contrib.auth.hashers import check_password, make_password
 import psycopg2
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test
-import time
-import json
-import openpyxl
+import time, json, openpyxl
 from openpyxl.utils import get_column_letter
 from .dynamic_forms import build_dynamic_run_form
 from django.template import Template, Context
+from sqlalchemy import create_engine, text
 
 
 
@@ -197,29 +196,33 @@ def run_query(request, query_uuid):
                     context_data[param.name] = form.cleaned_data.get(param.name)
                 else:
                     context_data[param.name] = form.cleaned_data.get(param.name)
-            print(context_data)
             t = Template(query.template)
             c = Context(context_data)
             sql = t.render(c)
         
             try:
                 start_time = time.time()
-                conn = psycopg2.connect(query.db_dsn)
-                cur = conn.cursor()
-                cur.execute(sql)  
-                result = cur.fetchall()
-                columns = [desc[0] for desc in cur.description]
-                cur.close()
-                conn.close()
-                end_time = time.time()
 
-                data_for_log = [dict(zip(columns, row)) for row in result]
+                engine = create_engine(query.db_dsn)
+                
+                with engine.connect() as conn:
+                    result = conn.execute(text(sql))
+                    rows = result.fetchall()
+                    columns = result.keys()
+                    response = []
+                    
+                    for row in rows:
+                        response_dict = {}
+                        for i, column in enumerate(columns):
+                            response_dict[column] = row[i]
+                        response.append(response_dict)
+                end_time = time.time()
 
                 log = RequestLog.objects.create(
                     query=query,
                     request=sql,
                     parameters=context_data,
-                    response=json.dumps(data_for_log, default=str),
+                    response=json.dumps(response),
                     response_code=0,
                     response_time=end_time - start_time
                 )
@@ -247,7 +250,7 @@ def run_query(request, query_uuid):
             return render(request, 'query_result.html', {
                 'query': query,
                 'form': form,
-                'result': result,
+                'result': rows,
                 'columns': columns,
                 'sql': sql,
                 'error': None,
@@ -290,6 +293,7 @@ def download_excel(request, request_log_id):
 def repeat_request(request, request_log_id):
     log = get_object_or_404(RequestLog, id=request_log_id)
     query = log.query
+    parameters = log.parameters  
 
     session_key = f'query_authenticated_{str(query.uuid)}'
     if query.password and not request.session.get(session_key, False):
@@ -306,50 +310,60 @@ def repeat_request(request, request_log_id):
         else:
             return render(request, 'query_password.html', {'query': query})
 
-
     if request.method == 'GET':
         try:
             result = json.loads(log.response)
-            print(result)
         except Exception:
             result = None
 
+        if result:
+            data_for_log = [list(r.values()) for r in result]
+            columns = list(result[0].keys())
+        else:
+            data_for_log = []
+            columns = []
+
+        requests = RequestLog.objects.filter(query_id=query.id).order_by('-created_at')[:10]
         return render(request, 'query_result.html', {
             'query': query,
-            'result': [list(r.values()) for r in result],
-            'columns': list(result[0].keys()),
+            'result': data_for_log,
+            'columns': columns,
             'sql': log.request,
             'error': None if log.response_code == 0 else log.response,
-            'request_log_id': log.id
+            'request_log_id': log.id,
+            'requests': requests
         })
 
     elif request.method == 'POST':
-        parameters = log.parameters
+        context_data = log.parameters
         t = Template(query.template)
-        c = Context(parameters)
+        c = Context(context_data)
         sql = t.render(c)
 
         try:
             start_time = time.time()
-            conn = psycopg2.connect(query.db_dsn)
-            cur = conn.cursor()
-            cur.execute(sql)
-            result = cur.fetchall()
-            columns = [desc[0] for desc in cur.description]
-            cur.close()
-            conn.close()
-            end_time = time.time()
 
-            data_for_log = [dict(zip(columns, row)) for row in result]
+            engine = create_engine(query.db_dsn)
+            with engine.connect() as conn:
+                result = conn.execute(text(sql))
+                rows = result.fetchall()
+                columns = result.keys()
+                response = [{col: row[i] for i, col in enumerate(columns)} for row in rows]
+
+            end_time = time.time()
 
             new_log = RequestLog.objects.create(
                 query=query,
                 request=sql,
                 parameters=parameters,
-                response=json.dumps(data_for_log, default=str),
+                response=json.dumps(response, default=str),
                 response_code=0,
                 response_time=end_time - start_time
             )
+
+            query.execution_count = (query.execution_count or 0) + 1
+            query.last_executed_at = timezone.now()
+            query.save()
 
         except Exception as e:
             new_log = RequestLog.objects.create(
@@ -368,10 +382,9 @@ def repeat_request(request, request_log_id):
 
         return render(request, 'query_result.html', {
             'query': query,
-            'result': result,
+            'result': rows,
             'columns': columns,
             'sql': sql,
             'error': None,
             'request_log_id': new_log.id
         })
-    f
